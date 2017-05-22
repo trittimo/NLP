@@ -8,7 +8,7 @@ public class HTMLParser {
 	 * @param html String of HTML Data
 	 */
 	public static String deparse(String html) {
-		final String START_BODY = "</body>";
+		final String START_BODY = "<body>";
 		final String EMPTY = "";
 		// skip header metadata
 		String body = html.substring(html.indexOf(START_BODY) + START_BODY.length());
