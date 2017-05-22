@@ -10,23 +10,28 @@ import java.util.Properties;
 
 public class NLP {
 	public static void main(String[] args) throws IOException {
-		if (args.length < 3) {
-			System.err.println("Usgae: NLP <input folder> <output file> <search phrases...>");
-			System.err.println("Example: NLP data/presidents output.txt \"Lincoln birthday\" \"George Washington Age\"");
+		if (args.length < 2) {
+			System.err.println("Usgae: NLP <input folder> <search phrases...>");
+			System.err.println("Example: NLP data/presidents \"Lincoln birthday\" \"George Washington Age\"");
 			return;
 		}
 		File infolder = new File(args[0]);
-		File outfile = new File(args[1]);
 		
 		if (!infolder.isDirectory()) {
 			System.err.println("The input folder must exist and be a directory");
 			return;
 		}
 		
-		List<String> rawData = new ArrayList<String>();
+		List<String[]> rawData = new ArrayList<String[]>();
 		for (File f : infolder.listFiles()) {
-			rawData.add(new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8));
+			String content = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
+			if (f.getName().endsWith(".html") || f.getName().endsWith(".html")) {
+				// TODO html parsing
+			}
+			rawData.add(new String[] {f.getName(), content});
 		}
+		
+		
 		
 		Properties arguments = new Properties();
 		arguments.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");

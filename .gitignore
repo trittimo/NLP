@@ -1,2 +1,5 @@
 .settings/*
 lib/*
+test/*
+data/*
+bin/*
