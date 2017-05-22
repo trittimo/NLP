@@ -3,7 +3,7 @@ package trittimo;
 public class HTMLParser {
 	/**
 	 * 
-	 * Ignores everything before the </head> tag, then removes all tags from the document. 
+	 * Ignores everything before the <body> tag, then removes all tags from the document. 
 	 * 
 	 * @param html String of HTML Data
 	 */
