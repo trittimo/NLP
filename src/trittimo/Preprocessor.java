@@ -11,7 +11,9 @@ import edu.stanford.nlp.util.PropertiesUtils;
 
 public class Preprocessor {
 	
-	private static final Properties PROPS = PropertiesUtils.asProperties("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
+	private static final Properties PROPS = PropertiesUtils.asProperties(
+			"annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref",
+			"tokenize.language", "en");
 	
 	private static StanfordCoreNLP pipeline;
 	
