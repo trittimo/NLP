@@ -41,11 +41,11 @@ public class NLP {
 		
 		for (Tuple<String, Annotation> datum : raw) {
 			List<CoreMap> sentences = datum.second.get(SentencesAnnotation.class);
-//			System.out.println(sentences.get(1).get(TreeAnnotation.class));
-			for (CoreMap sentence : datum.second.get(SentencesAnnotation.class)) {
-				Tree tree = sentence.get(TreeAnnotation.class);
-				System.out.println(tree);
-			}
+			System.out.println(sentences.get(1).get(TreeAnnotation.class).getChild(0).getChild(0).getChild(0));
+//			for (CoreMap sentence : datum.second.get(SentencesAnnotation.class)) {
+//				Tree tree = sentence.get(TreeAnnotation.class);
+//				System.out.println(tree);
+//			}
 		}
 	}
 	

@@ -1,6 +1,6 @@
 .settings/*
 lib/*
-test/*
+.cache-*
 data/*
 bin/*
 .classpath
