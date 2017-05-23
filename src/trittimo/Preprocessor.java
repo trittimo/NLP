@@ -24,6 +24,12 @@ public class Preprocessor {
 	private static MessageDigest digest;
 	private static StanfordCoreNLP pipeline;
 	
+	public static Annotation parseQuery(String query) {
+		Annotation annotation = new Annotation(query);
+		getPipeline().annotate(annotation);
+		return annotation;
+	}
+	
 	/**
 	 * Creates a {@link edu.stanford.nlp.pipeline.Annotation Annotation} document for a file.
 	 * 

@@ -2,14 +2,14 @@ package trittimo;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
+import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
-import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
+import edu.stanford.nlp.util.CoreMap;
 
 public class NLP {
 	public static void main(String[] args) throws IOException {
@@ -25,26 +25,36 @@ public class NLP {
 			return;
 		}
 		
-		List<String[]> rawData = new ArrayList<String[]>();
+		List<Tuple<String, Annotation>> raw = new ArrayList<>();
 		for (File f : infolder.listFiles()) {
-			String content = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
-			if (f.getName().endsWith(".html") || f.getName().endsWith(".html")) {
-				content = HTMLParser.deparse(content);
+			raw.add(new Tuple<>(f.getName(), Preprocessor.loadFile(f.toPath().toString())));
+		}
+		
+		List<Annotation> queries = new ArrayList<>();
+		for (int i = 1; i < args.length; i++) {
+			queries.add(Preprocessor.parseQuery(args[i]));
+		}
+		
+		// subject/verb match
+		// or subject/object match
+		// subject must always match
+		
+		for (Tuple<String, Annotation> datum : raw) {
+			List<CoreMap> sentences = datum.second.get(SentencesAnnotation.class);
+//			System.out.println(sentences.get(1).get(TreeAnnotation.class));
+			for (CoreMap sentence : datum.second.get(SentencesAnnotation.class)) {
+				Tree tree = sentence.get(TreeAnnotation.class);
+				System.out.println(tree);
 			}
-			rawData.add(new String[] {f.getName(), content});
 		}
+	}
+	
+
+	public static void mute() {
 		
-		Properties arguments = new Properties();
-		arguments.setProperty("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
-		
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(arguments);
-		
-		for (String[] datum : rawData) {
-			Annotation document = new Annotation(datum[1]);
-			pipeline.annotate(document);
-			System.out.println(document.toString());
-		}
-		
+	}
+	
+	public static void unmute() {
 		
 	}
 }
