@@ -11,10 +11,21 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
+import edu.stanford.nlp.coref.CorefCoreAnnotations;
+import edu.stanford.nlp.coref.CorefCoreAnnotations.CorefChainAnnotation;
+import edu.stanford.nlp.coref.data.CorefChain;
+import edu.stanford.nlp.coref.data.CorefChain.CorefMention;
+import edu.stanford.nlp.ling.CoreAnnotations;
+import edu.stanford.nlp.ling.CoreAnnotations.TokensAnnotation;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.PropertiesUtils;
 
 public class Preprocessor {
@@ -79,13 +90,78 @@ public class Preprocessor {
 	 * @throws ClassNotFoundException If the serialized object's class cannot be found in the classpath at runtime.
 	 */
 	private static Annotation loadCacheFile(File cache) throws IOException, ClassNotFoundException {
+		System.out.println("Loading Cached Object: " + cache.getName());
 		FileInputStream fis = new FileInputStream(cache);
         ObjectInputStream ois = new ObjectInputStream(fis);
-        Annotation a = (Annotation) ois.readObject();
+        Object o = ois.readObject();
         ois.close();
         fis.close();
+        Annotation a = (Annotation) o;
 		return a;
 	}
+
+// Test with serializing by replacing words like "he" with the object they link to
+//	public static void serialize(Annotation doc) {
+//		
+//		Map<Integer, CorefChain> corefs = doc.get(CorefChainAnnotation.class);
+//		List<CoreMap> sentences = doc.get(CoreAnnotations.SentencesAnnotation.class);
+//
+//	    List<String> resolved = new ArrayList<String>();
+//
+//	    for (CoreMap sentence : sentences) {
+//
+//	        List<CoreLabel> tokens = sentence.get(CoreAnnotations.TokensAnnotation.class);
+//
+//	        for (CoreLabel token : tokens) {
+//
+//	            Integer corefClustId= token.get(CorefCoreAnnotations.CorefClusterIdAnnotation.class);
+//	            System.out.println(token.word() +  " --> corefClusterID = " + corefClustId);
+//
+//
+//	            CorefChain chain = corefs.get(corefClustId);
+//	            System.out.println("matched chain = " + chain);
+//
+//
+//	            if (chain==null || chain.getMentionsInTextualOrder().size() == 1) {
+//	                resolved.add(token.word());
+//	            } else{
+//
+//	                int sentINdx = chain.getRepresentativeMention().sentNum -1;
+//	                CoreMap corefSentence = sentences.get(sentINdx);
+//	                List<CoreLabel> corefSentenceTokens = corefSentence.get(TokensAnnotation.class);
+//
+//	                String newwords = "";
+//	                CorefMention reprMent = chain.getRepresentativeMention();
+//	                if (token.index() < reprMent.startIndex || token.index() > reprMent.endIndex) {
+//
+//	                    for (int i = reprMent.startIndex; i < reprMent.endIndex; i++) {
+//	                        CoreLabel matchedLabel = corefSentenceTokens.get(i - 1); 
+//	                        resolved.add(matchedLabel.word());
+//
+//	                        newwords += matchedLabel.word() + " ";
+//
+//	                    }
+//	                }
+//
+//	                else {
+//	                    resolved.add(token.word());
+//
+//	                }
+//
+//	                System.out.println("converting " + token.word() + " to " + newwords);
+//	            }
+//
+//	        }
+//	    }
+//
+//	    String resolvedStr ="";
+//	    System.out.println();
+//	    for (String str : resolved) {
+//	        resolvedStr+=str+" ";
+//	    }
+//	    System.out.println(resolvedStr);
+//
+//	}
 
 	/**
 	 * Reads a file, creates an {@link edu.stanford.nlp.pipeline.Annotation Annotation}, and saves it to a cached file.
@@ -109,17 +185,18 @@ public class Preprocessor {
 		Annotation document = new Annotation(content);
 		pipeline.annotate(document);
 		
-		// serialize here
-		String finPath = f.getAbsolutePath();
-		String foutPath = finPath + ".cache-" + hash;
-		FileOutputStream fos = new FileOutputStream(foutPath);
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		oos.writeObject(document);
-		oos.close();
-		fos.close();
-		System.out.printf("CACHING: %s --> %s%n",
-				finPath.substring(finPath.lastIndexOf(File.separator) + 1),
-				foutPath.substring(foutPath.lastIndexOf(File.separator) + 1));
+		// serialize here -- CoreNLP DOESN"T SERIALIZE OBJECT CORRECTLY, THIS IS BROKEN
+//		String finPath = f.getAbsolutePath();
+//		String foutPath = finPath + ".cache-" + hash;
+//		System.out.println("Document: ");
+//		FileOutputStream fos = new FileOutputStream(foutPath);
+//		ObjectOutputStream oos = new ObjectOutputStream(fos);
+//		oos.writeObject(document);
+//		oos.close();
+//		fos.close();
+//		System.out.printf("CACHING: %s --> %s%n",
+//				finPath.substring(finPath.lastIndexOf(File.separator) + 1),
+//				foutPath.substring(foutPath.lastIndexOf(File.separator) + 1));
 		
 		return document;
 	}
