@@ -2,17 +2,15 @@ package trittimo;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import edu.stanford.nlp.pipeline.Annotation;
@@ -24,9 +22,13 @@ public class Preprocessor {
 	private static final Properties PROPS = PropertiesUtils.asProperties("annotators", "tokenize, ssplit, pos, lemma, ner, parse, dcoref");
 	
 	private static MessageDigest digest;
+	private static StanfordCoreNLP pipeline;
 	
 	/**
+	 * Creates a {@link edu.stanford.nlp.pipeline.Annotation Annotation} document for a file.
 	 * 
+	 * If a cached/serialized {@link edu.stanford.nlp.pipeline.Annotation Annotation} exists, the serialized version will be loaded instead. 
+	 * This method will automatically detect if the cache/serialized version is stale by checking the MD5 of the file to be loaded against the cached version.
 	 * 
 	 * @param fname File to process / load from cache
 	 */
@@ -39,6 +41,7 @@ public class Preprocessor {
 		}
 		
 		try {
+			
 			String hash = getFileHashString(infile);
 			
 			// check for cached copy
@@ -62,11 +65,31 @@ public class Preprocessor {
 		
 	}
 
-	private static Annotation loadCacheFile(File cache) {
-		// TODO Auto-generated method stub
-		return null;
+	/**
+	 *  Loads the serialized {@link edu.stanford.nlp.pipeline.Annotation Annotation} from a file.
+	 * @param cache The file for the cached/serialized {@link edu.stanford.nlp.pipeline.Annotation Annotation}
+	 * @return An {@link edu.stanford.nlp.pipeline.Annotation Annotation} representing the document.
+	 * @throws IOException If an Exception occurs in handling the IO
+	 * @throws ClassNotFoundException If the serialized object's class cannot be found in the classpath at runtime.
+	 */
+	private static Annotation loadCacheFile(File cache) throws IOException, ClassNotFoundException {
+		FileInputStream fis = new FileInputStream(cache);
+        ObjectInputStream ois = new ObjectInputStream(fis);
+        Annotation a = (Annotation) ois.readObject();
+        ois.close();
+        fis.close();
+		return a;
 	}
 
+	/**
+	 * Reads a file, creates an {@link edu.stanford.nlp.pipeline.Annotation Annotation}, and saves it to a cached file.
+	 * 
+	 * @param f
+	 * @param hash
+	 * @param isHTML
+	 * @return
+	 * @throws IOException
+	 */
 	private static Annotation loadAndCacheFile(File f, String hash, boolean isHTML) throws IOException {
 		
 		// parse if html
@@ -75,11 +98,22 @@ public class Preprocessor {
 			content = HTMLParser.deparse(content);
 		}
 		
-		StanfordCoreNLP pipeline = new StanfordCoreNLP(PROPS);
+		// Create the annotation
+		StanfordCoreNLP pipeline = getPipeline();
 		Annotation document = new Annotation(content);
 		pipeline.annotate(document);
 		
 		// serialize here
+		String finPath = f.getAbsolutePath();
+		String foutPath = finPath + ".cache-" + hash;
+		FileOutputStream fos = new FileOutputStream(foutPath);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(document);
+		oos.close();
+		fos.close();
+		System.out.printf("CACHING: %s --> %s%n",
+				finPath.substring(finPath.lastIndexOf(File.separator) + 1),
+				foutPath.substring(foutPath.lastIndexOf(File.separator) + 1));
 		
 		return document;
 	}
@@ -111,4 +145,9 @@ public class Preprocessor {
 		return result;
 	}
 	
+	public static StanfordCoreNLP getPipeline() {
+		if (pipeline == null)
+			pipeline = new StanfordCoreNLP(PROPS);
+		return pipeline;
+	}
 }
