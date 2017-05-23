@@ -26,7 +26,7 @@ public class DocumentSearcher {
 	private static final RelationshipComparator COMPARATOR = new RelationshipComparator();
 
 	public static boolean search(Annotation document, Annotation queryDoc, float threshold) {
-		
+		System.out.println("Now searching");
 		CoreMap queryScentence = queryDoc
 			.get(SentencesAnnotation.class)
 			.get(0);

@@ -3,6 +3,7 @@ package trittimo;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Properties;
 
 import edu.stanford.nlp.pipeline.Annotation;
@@ -46,6 +47,7 @@ public class Preprocessor {
 			ext = ext.substring(ext.lastIndexOf(".") + 1);
 			boolean isHTML = ext.equalsIgnoreCase("html") || ext.equalsIgnoreCase("htm");
 			String content = new String(Files.readAllBytes(infile.toPath()), StandardCharsets.UTF_8);
+			
 			if (isHTML) {
 				content = HTMLParser.deparse(content);
 			}
