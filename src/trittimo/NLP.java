@@ -7,6 +7,7 @@ import java.util.List;
 
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.trees.EnglishGrammaticalStructure;
 import edu.stanford.nlp.trees.Tree;
 import edu.stanford.nlp.trees.TreeCoreAnnotations.TreeAnnotation;
 import edu.stanford.nlp.util.CoreMap;
@@ -41,7 +42,9 @@ public class NLP {
 		
 		for (Tuple<String, Annotation> datum : raw) {
 			List<CoreMap> sentences = datum.second.get(SentencesAnnotation.class);
-			System.out.println(sentences.get(1).get(TreeAnnotation.class).getChild(0).getChild(0).getChild(0));
+			EnglishGrammaticalStructure structure = new EnglishGrammaticalStructure(sentences.get(1).get(TreeAnnotation.class));
+//			System.out.println(structure.);
+//			System.out.println(sentences.get(1).get(TreeAnnotation.class).getChild(0).getChild(0).getChild(0));
 //			for (CoreMap sentence : datum.second.get(SentencesAnnotation.class)) {
 //				Tree tree = sentence.get(TreeAnnotation.class);
 //				System.out.println(tree);
