@@ -1,6 +1,7 @@
 package trittimo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,6 +14,7 @@ import edu.stanford.nlp.coref.data.Dictionaries;
 import edu.stanford.nlp.coref.data.CorefChain.CorefMention;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.IndexedWord;
+import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.semgraph.SemanticGraph;
@@ -91,9 +93,7 @@ public class DocumentSearcher {
 	private static float compare(SemanticGraph doc, SemanticGraph query, HashMap<Integer, Set<String>> corefMap, HashMap<IndexedWord, Integer> depthMap) {
 		float score = 0;
 		
-		
-		System.out.println("--SCORING-SCENTENCE");
-		
+		System.out.println("--GET-EDGES");
 		// Get edges
 		List<SemanticGraphEdge> qEdge = query.edgeListSorted();
 		List<SemanticGraphEdge> dEdge = doc.edgeListSorted();
@@ -101,6 +101,17 @@ public class DocumentSearcher {
 		// Resort for our own purposes
 		qEdge.sort(COMPARATOR);
 		dEdge.sort(COMPARATOR);
+		
+//		System.out.println("\tQuery:");
+//		for (SemanticGraphEdge q : qEdge) {
+//			System.out.println("\t\t" + q);
+//		}
+//		System.out.println("\tSentence:");
+//		for (SemanticGraphEdge d : dEdge) {
+//			System.out.println("\t\t" + d);
+//		}
+
+		System.out.println("--SCORING-SCENTENCE");
 		
 		// if either has nothing in it, just ignore it. 
 		if (qEdge.isEmpty() || dEdge.isEmpty())
@@ -111,13 +122,12 @@ public class DocumentSearcher {
 		
 		SemanticGraphEdge qe, de;
 		
-		
 		// Attempt to compare matching elements of q and d
 		while ((q < qEdge.size()) && (d < dEdge.size())) {
 			qe = qEdge.get(q);
 			de = dEdge.get(d);
 			
-			System.out.printf("[[%s]]\t%s\t[[%s]]%n", qe, ((qe.compareTo(de) < 0)?"<":">="), de);
+			System.out.printf("[[%s]]\t%s\t[[%s]]%n", qe, ((COMPARATOR.compare(qe, de) < 0)?"<":">="), de);
 
 			int depth = depthMap.get(qe.getGovernor());
 			float multiplier = 1 / (((float) depth) * depth); // each relationship is 1/n^2 as important, where n is the depth in the tree
@@ -168,8 +178,19 @@ public class DocumentSearcher {
 		
 		// check if match
 		String lookfor = qroot.word().toLowerCase();
+		System.out.printf("%s -(lemma)-> %s%n", lookfor, qroot.lemma());
 		if (corefMap.containsKey(droot.index())) {
-			if (corefMap.get(droot.index()).contains(lookfor)) {
+			Set<String> vals = corefMap.get(droot.index());
+			boolean contains = vals.contains(lookfor);
+			if (!contains) {
+				for (String mention : vals) {
+					if (Arrays.asList(mention.split(" ")).contains(lookfor)) {
+						contains = true;
+						break;
+					}
+				}
+			}
+			if (contains) {
 				System.out.printf("Intepreting %s as %s!%n", droot, corefMap.get(droot.index()));
 				return true;
 			}
@@ -211,6 +232,12 @@ public class DocumentSearcher {
 			else
 				return -0.1f;
 		}
+		if (qe.getRelation().toString().equals("amod")) {
+			if (match)
+				return 0.2f;
+			else
+				return -0.1f;
+		}
 		if (qe.getRelation().toString().equals("punct"))
 			return 0;
 		return 0.05f;
@@ -219,8 +246,12 @@ public class DocumentSearcher {
 	private static float scoreMissingRelation(SemanticGraphEdge qe) {
 		System.out.printf("MISSING: %s --[%s]-> %s%n", qe.getGovernor(), qe.getRelation(), qe.getDependent());
 		// if negation isn't present
-		if (qe.getRelation().toString().equals("neg")) {
+		if (qe.getRelation().getShortName().equals("neg")) {
 			return -1f;
+		}
+		// Explicitly, compounds are ignored
+		if (qe.getRelation().getShortName().equals("compound")) {
+			return 0f;
 		}
 		return 0f;
 	}
