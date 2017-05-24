@@ -2,24 +2,24 @@ package trittimo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Comparator;
 
 import edu.stanford.nlp.coref.CorefCoreAnnotations;
 import edu.stanford.nlp.coref.data.CorefChain;
-import edu.stanford.nlp.coref.data.Dictionaries;
 import edu.stanford.nlp.coref.data.CorefChain.CorefMention;
+import edu.stanford.nlp.coref.data.Dictionaries;
 import edu.stanford.nlp.ling.CoreAnnotations;
-import edu.stanford.nlp.ling.IndexedWord;
-import edu.stanford.nlp.ling.Word;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
+import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.pipeline.Annotation;
+import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import edu.stanford.nlp.semgraph.SemanticGraph;
-import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.semgraph.SemanticGraphCoreAnnotations.CollapsedCCProcessedDependenciesAnnotation;
+import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.util.CoreMap;
 
 @SuppressWarnings("deprecation")
@@ -27,8 +27,16 @@ public class DocumentSearcher {
 	
 	private static final RelationshipComparator COMPARATOR = new RelationshipComparator();
 
-	public static boolean search(Annotation document, Annotation queryDoc, float threshold) {
-		System.out.println("Now searching");
+	public static boolean search(AnnotationWrapper doc, Annotation queryDoc, float threshold) {
+		if (!doc.annotated) {
+			System.out.println("Annotating document");
+			StanfordCoreNLP pipeline = Preprocessor.getPipeline();
+			pipeline.annotate(doc.annotation);
+			doc.annotated = true;
+			System.out.println("Finished annotating document");
+		}
+		Annotation document = doc.annotation;
+		
 		CoreMap queryScentence = queryDoc
 			.get(SentencesAnnotation.class)
 			.get(0);
@@ -137,8 +145,9 @@ public class DocumentSearcher {
 				float val = scoreMatchingRelation(qe, de, corefMap);
 				score += (multiplier * val);
 				System.out.printf("\t%+.3f * %+.3f = %+.3f (T: %.3f)%n", val, multiplier, val * multiplier, score);
-				// Advance D
+				// Advance d and q, since we've matched them both
 				d++;
+				q++;
 			}
 			// If query < document edge (document did not contain this relation)
 			else if (COMPARATOR.compare(qe, de) < 0) {
@@ -171,7 +180,8 @@ public class DocumentSearcher {
 	}
 
 	private static boolean equivalentWords(IndexedWord qroot, IndexedWord droot, HashMap<Integer, Set<String>> corefMap) {
-
+		
+		
 		// simple case
 		if (qroot.word().equalsIgnoreCase(droot.word()))
 			return true;
@@ -245,7 +255,7 @@ public class DocumentSearcher {
 
 	private static float scoreMissingRelation(SemanticGraphEdge qe) {
 		System.out.printf("MISSING: %s --[%s]-> %s%n", qe.getGovernor(), qe.getRelation(), qe.getDependent());
-		// if negation isn't present
+		// if negation is present
 		if (qe.getRelation().getShortName().equals("neg")) {
 			return -1f;
 		}

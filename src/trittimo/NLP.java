@@ -11,7 +11,7 @@ import java.util.Scanner;
 import edu.stanford.nlp.pipeline.Annotation;
 
 public class NLP {
-	private static final float THRESHOLD = 0.5f;
+	private static final float THRESHOLD = 0.35f;
 	
 	public static void main(String[] args) throws IOException {
 		if (args.length < 2) {
@@ -54,12 +54,21 @@ public class NLP {
 			unmute();
 		}
 		
-		
+		List<Tuple<String, List<AnnotationWrapper>>> wrapped = new ArrayList<>();
 		for (Tuple<String, List<Annotation>> datum : raw) {
+			List<AnnotationWrapper> w = new ArrayList<AnnotationWrapper>();
+			Tuple<String, List<AnnotationWrapper>> t = new Tuple<>(datum.first, w);
+			for (Annotation annotation : datum.second) {
+				w.add(new AnnotationWrapper(annotation));
+			}
+			wrapped.add(t);
+		}
+		
+		for (Tuple<String, List<AnnotationWrapper>> datum : wrapped) {
 			for (Tuple<String, Annotation> query : queries) {
 				System.out.print("Searching " + datum.first + " for phrase '" + query.first + "': ");
 				mute();
-				for (Annotation a : datum.second) {
+				for (AnnotationWrapper a : datum.second) {
 					if (DocumentSearcher.search(a, query.second, THRESHOLD)) {
 						unmute();
 						System.out.println("true => phrase exists");
@@ -82,6 +91,16 @@ public class NLP {
 			unmute();
 		}
 		
+		List<Tuple<String, List<AnnotationWrapper>>> wrapped = new ArrayList<>();
+		for (Tuple<String, List<Annotation>> datum : raw) {
+			List<AnnotationWrapper> w = new ArrayList<AnnotationWrapper>();
+			Tuple<String, List<AnnotationWrapper>> t = new Tuple<>(datum.first, w);
+			for (Annotation annotation : datum.second) {
+				w.add(new AnnotationWrapper(annotation));
+			}
+			wrapped.add(t);
+		}
+		
 		Scanner s = new Scanner(System.in);
 		while (true) {
 			System.out.println("Type 'exit' to quit"); 
@@ -91,18 +110,23 @@ public class NLP {
 				break;
 			}
 			
-			for (Tuple<String, List<Annotation>> datum : raw) {
-				System.out.print("Searching " + datum.first + " for phrase '" + query + "': ");
+			Annotation queryA = Preprocessor.parseQuery(query);
+			
+			for (Tuple<String, List<AnnotationWrapper>> datum : wrapped) {
+				System.out.println("Searching " + datum.first + " for phrase '" + query + "'");
 				mute();
-				for (Annotation a : datum.second) {
-					if (DocumentSearcher.search(a, Preprocessor.parseQuery(query), THRESHOLD)) {
+				boolean found = false;
+				for (AnnotationWrapper a : datum.second) {
+					if (DocumentSearcher.search(a, queryA, THRESHOLD)) {
 						unmute();
-						System.out.println("true => phrase exists");
+						System.out.println("\ttrue => phrase exists");
+						found = true;
 						break;
-					} else {
-						unmute();
-						System.out.println("false => phrase does not exist");
 					}
+				}
+				if (!found) {
+					unmute();
+					System.out.println("Could not find phrase in " + datum.first);
 				}
 			}
 		}

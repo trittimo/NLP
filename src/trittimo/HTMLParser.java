@@ -23,18 +23,24 @@ public class HTMLParser {
 		
 		// Split it up on h2
 		List<String> split = new ArrayList<>();
+		
 		for (String s : body.split("<h2>")) {
 			s = s.replaceAll("<h\\d>\\s*?</h\\d>", EMPTY);
-			s = s.replaceAll("<div class=\"hatnote\">\\s*?</div>", EMPTY);
-			s = s.replaceAll("<div id=\"toctitle\">\\s*?</div>", EMPTY);
+			s = s.replaceAll("<div class=\"hatnote[\\s\\S]*?</div>", EMPTY);
+			s = s.replaceAll("<li[\\s\\S]*?</a>", EMPTY);
+			s = s.replaceAll("<table>[\\s\\S]*?</table>", EMPTY);
+			s = s.replaceAll("<div id=\"toctitle\">[\\s\\S]*?</div>", EMPTY);
+			s = s.replaceAll("<span class=\"toctext\">[\\s\\S]*?</span>", EMPTY);
+			s = s.replaceAll("<span class=\"mw-headline\"[\\s\\S]*?</span>", EMPTY);
 			s = s.replaceAll("<.*?>", EMPTY);
 			s = s.replaceAll("\\[\\d*?\\]", EMPTY);
 			s = s.replaceAll("\\s+", " ").trim();
 			split.add(s);
 		}
-		for (String s : split) {
-			System.out.println(s);
-		}
+		
+//		for (String s : split) {
+//			System.out.println(s);
+//		}
 //		System.exit(0);
 		// return clean
 		return split;

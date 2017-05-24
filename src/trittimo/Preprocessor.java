@@ -57,12 +57,9 @@ public class Preprocessor {
 				splitContent.add(content);
 			}
 
-			// Create the annotation
-			StanfordCoreNLP pipeline = getPipeline();
 			List<Annotation> documents = new ArrayList<>();
 			for (String s : splitContent) {
-				Annotation document = new Annotation(content);
-				pipeline.annotate(document);
+				Annotation document = new Annotation(s);
 				documents.add(document);
 			}
 			
