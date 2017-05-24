@@ -11,6 +11,8 @@ import java.util.Scanner;
 import edu.stanford.nlp.pipeline.Annotation;
 
 public class NLP {
+	private static final float THRESHOLD = 0.5f;
+	
 	public static void main(String[] args) throws IOException {
 		if (args.length < 2) {
 			System.err.println("Usgae: NLP <input folder> <search phrases...>");
@@ -44,7 +46,7 @@ public class NLP {
 		}
 		
 
-		List<Tuple<String, Annotation>> raw = new ArrayList<>();
+		List<Tuple<String, List<Annotation>>> raw = new ArrayList<>();
 		for (File f : infolder.listFiles()) {
 			System.out.println("Analyzing document: " + f.getName());
 			mute();
@@ -53,23 +55,26 @@ public class NLP {
 		}
 		
 		
-		for (Tuple<String, Annotation> datum : raw) {
+		for (Tuple<String, List<Annotation>> datum : raw) {
 			for (Tuple<String, Annotation> query : queries) {
 				System.out.print("Searching " + datum.first + " for phrase '" + query.first + "': ");
 				mute();
-				if (DocumentSearcher.search(datum.second, query.second, 0.5f)) {
-					unmute();
-					System.out.println("true => phrase exists");
-				} else {
-					unmute();
-					System.out.println("false => phrase does not exist");
+				for (Annotation a : datum.second) {
+					if (DocumentSearcher.search(a, query.second, THRESHOLD)) {
+						unmute();
+						System.out.println("true => phrase exists");
+						break;
+					} else {
+						unmute();
+						System.out.println("false => phrase does not exist");
+					}
 				}
 			}
 		}
 	}
 	
 	private static void CLI(File infolder) {
-		List<Tuple<String, Annotation>> raw = new ArrayList<>();
+		List<Tuple<String, List<Annotation>>> raw = new ArrayList<>();
 		for (File f : infolder.listFiles()) {
 			System.out.println("Analyzing document: " + f.getName());
 			mute();
@@ -86,15 +91,18 @@ public class NLP {
 				break;
 			}
 			
-			for (Tuple<String, Annotation> datum : raw) {
+			for (Tuple<String, List<Annotation>> datum : raw) {
 				System.out.print("Searching " + datum.first + " for phrase '" + query + "': ");
 				mute();
-				if (DocumentSearcher.search(datum.second, Preprocessor.parseQuery(query), 0.5f)) {
-					unmute();
-					System.out.println("true => phrase exists");
-				} else {
-					unmute();
-					System.out.println("false => phrase does not exist");
+				for (Annotation a : datum.second) {
+					if (DocumentSearcher.search(a, Preprocessor.parseQuery(query), THRESHOLD)) {
+						unmute();
+						System.out.println("true => phrase exists");
+						break;
+					} else {
+						unmute();
+						System.out.println("false => phrase does not exist");
+					}
 				}
 			}
 		}
@@ -106,8 +114,8 @@ public class NLP {
 	private static PrintStream silenced = new PrintStream(new OutputStream() {public void write(int b) throws IOException {}});
 	
 	private static void mute() {
-		System.setErr(silenced);
-		System.setOut(silenced);
+//		System.setErr(silenced);
+//		System.setOut(silenced);
 	}
 	
 	private static void unmute() {

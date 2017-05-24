@@ -3,6 +3,7 @@ package trittimo;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,7 +33,7 @@ public class Preprocessor {
 	 * 
 	 * @param fname File to process / load from cache
 	 */
-	public static Annotation loadFile(String fname) {
+	public static List<Annotation> loadFile(String fname) {
 
 		File infile = new File(fname);
 		
@@ -48,17 +49,25 @@ public class Preprocessor {
 			boolean isHTML = ext.equalsIgnoreCase("html") || ext.equalsIgnoreCase("htm");
 			String content = new String(Files.readAllBytes(infile.toPath()), StandardCharsets.UTF_8);
 			
+			List<String> splitContent = null;
 			if (isHTML) {
-				content = HTMLParser.deparse(content);
+				splitContent = HTMLParser.deparse(content);
+			} else {
+				splitContent = new ArrayList<>();
+				splitContent.add(content);
 			}
 
 			// Create the annotation
 			StanfordCoreNLP pipeline = getPipeline();
-			Annotation document = new Annotation(content);
-			pipeline.annotate(document);
+			List<Annotation> documents = new ArrayList<>();
+			for (String s : splitContent) {
+				Annotation document = new Annotation(content);
+				pipeline.annotate(document);
+				documents.add(document);
+			}
 			
-			return document;
 			
+			return documents;
 		} catch (Exception e) {
 			// bubble up error
 			throw new RuntimeException(e);

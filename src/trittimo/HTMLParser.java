@@ -1,6 +1,6 @@
 package trittimo;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HTMLParser {
@@ -10,7 +10,7 @@ public class HTMLParser {
 	 * 
 	 * @param html String of HTML Data
 	 */
-	public static String deparse(String html) {
+	public static List<String> deparse(String html) {
 		final String START_BODY = "<body";
 		final String EMPTY = "";
 		// skip header metadata
@@ -22,11 +22,21 @@ public class HTMLParser {
 		body = body.replaceAll("(<!--.*?-->)", EMPTY);
 		
 		// Split it up on h2
-		
-		body = body.replaceAll("<.*?>", EMPTY);
-		body = body.replaceAll("\\[\\d*?\\]", EMPTY);
-		body = body.replaceAll("\\s+", " ").trim();
+		List<String> split = new ArrayList<>();
+		for (String s : body.split("<h2>")) {
+			s = s.replaceAll("<h\\d>\\s*?</h\\d>", EMPTY);
+			s = s.replaceAll("<div class=\"hatnote\">\\s*?</div>", EMPTY);
+			s = s.replaceAll("<div id=\"toctitle\">\\s*?</div>", EMPTY);
+			s = s.replaceAll("<.*?>", EMPTY);
+			s = s.replaceAll("\\[\\d*?\\]", EMPTY);
+			s = s.replaceAll("\\s+", " ").trim();
+			split.add(s);
+		}
+		for (String s : split) {
+			System.out.println(s);
+		}
+//		System.exit(0);
 		// return clean
-		return body;
+		return split;
 	}
 }
